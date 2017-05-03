@@ -160,3 +160,332 @@ public:
     }
 };
 ```
+
+#### 454. 4Sum II
+Given four lists A, B, C, D of integer values, compute how many tuples (i, j, k, l) there are such that A[i] + B[j] + C[k] + D[l] is zero.
+
+To make problem a bit easier, all A, B, C, D have same length of N where 0 ≤ N ≤ 500. All integers are in the range of -228 to 228 - 1 and the result is guaranteed to be at most 231 - 1.
+
+思路：如果直接枚举的话， n^4， 时间复杂度太大。 我们可以任意地两两组织一下，题目告诉了ABCD数组的大小一样
+。此题需要注意 重复情况。
+
+解法1： 用hash, 讲A+B 哈希存储起来， 然后查找 -（C + D）
+
+```c++
+class Solution {
+public:
+    int fourSumCount(vector<int>& A, vector<int>& B, vector<int>& C, vector<int>& D) {
+        unordered_map<int, int> map;
+        for(int i = 0; i < A.size(); i++){
+            for(int j = 0; j < B.size(); j++){
+                map[A[i] + B[j]] ++;
+            }
+        }
+        int r = 0;
+        for(int i = 0; i < C.size(); i++){
+            for(int j = 0; j < D.size(); j++){
+                unordered_map<int, int>::iterator it = map.find(-C[i] - D[j]);
+                if(it != map.end()){
+                    r += it->second;
+                }
+            }
+        }
+        return r;
+    }
+};
+```
+
+解法2： 将 A* B， C* D 存储起来，排序， 遍历AB, 在CD 中 折半查找  
+
+```c++
+class Solution {
+public:
+    int low(vector<int> & CD, int num){
+        int left = 0;
+        int right = CD.size() - 1;
+        while(left <= right){
+            int mid = (left + right) / 2;
+            if(CD[mid] < num){
+                left = mid + 1;
+            }else{
+               right = mid - 1;
+            }
+        }
+        return CD[left]==num? left : -1;
+    }
+
+    int high(vector<int>& CD, int num){
+        int left = 0;
+        int right = CD.size() - 1;
+        while(left <= right){
+            int mid = (left + right) / 2;
+            if(CD[mid] <= num){
+                left = mid + 1;
+            }else{
+               right = mid - 1;
+            }
+        }
+        return CD[right]==num? right : -1;
+    }
+
+    int fourSumCount(vector<int>& A, vector<int>& B, vector<int>& C, vector<int>& D) {
+        vector<int> AB;
+        for(int i = 0; i < A.size(); i++){
+            for(int j = 0 ; j < B.size(); j++){
+                AB.push_back(A[i] + B[j]);
+            }
+        }
+         vector<int> CD;
+         for(int i = 0; i < C.size(); i++){
+            for(int j = 0 ; j < D.size(); j++){
+                CD.push_back(C[i] + D[j]);
+            }
+        }
+        sort(AB.begin(), AB.end());
+        sort(CD.begin(), CD.end());
+        int count = 0;
+
+        for(int i = 0; i < AB.size(); i++){
+            int num = - AB[i];
+            int l = low(CD, num);
+            if(l != -1){
+                int r = high(CD, num);
+                count += (r- l + 1);
+            }
+        }
+        return count;
+    }
+};
+```
+
+#### 441
+You have a total of n coins that you want to form in a staircase shape, where every k-th row must have exactly k coins.
+
+Given n, find the total number of full staircase rows that can be formed.
+
+n is a non-negative integer and fits within the range of a 32-bit signed integer.
+
+Example 1:
+
+n = 5
+
+The coins can form the following rows:
+¤
+¤ ¤
+¤ ¤
+
+Because the 3rd row is incomplete, we return 2.
+
+思路： 这个题可以利用等差数列 做个不等式，然后二分查找，当然也可以利用求根公式直接求出来。 二分查找的时候，一定注意不要越界。 因为我们用到了 2 * n,  是有可能超出整数范围的。
+
+```c++
+class Solution {
+public:
+    int arrangeCoins(int n) {
+        if(n < 1){
+            return 0;
+        }
+        long nn = (long) n;
+        long kl = 0;
+
+        long kr = sqrt( 2 * nn);
+
+        while(kl <= kr){
+            long mid = (kl + kr) / 2;
+            if(mid * (mid + 1) <= 2 * nn){
+               kl = mid + 1;
+            }else{
+               kr = mid -1;
+            }
+        }
+        return kr;
+    }
+};
+```
+
+#### 35. Search Insert Position
+Given a sorted array and a target value, return the index if the target is found. If not, return the index where it would be if it were inserted in order.
+
+You may assume no duplicates in the array.
+
+Here are few examples.
+[1,3,5,6], 5 → 2
+
+[1,3,5,6], 2 → 1
+
+[1,3,5,6], 7 → 4
+
+[1,3,5,6], 0 → 0
+
+思路： 此题和找 low bound 差不多的算法
+
+```c++
+class Solution {
+public:
+    int searchInsert(vector<int>& nums, int target) {
+        int left = 0;
+        int right = nums.size() -1;
+        while(left <= right){
+            int mid =  (left + right) / 2;
+            if(nums[mid] < target){
+                left = mid + 1;
+            }else
+                right = mid - 1;
+
+        }
+        return left;
+    }
+};
+```
+
+
+
+#### 436. Find Right Interval Add to List
+
+Given a set of intervals, for each of the interval i, check if there exists an interval j whose start point is bigger than or equal to the end point of the interval i, which can be called that j is on the "right" of i.
+
+For any interval i, you need to store the minimum interval j's index, which means that the interval j has the minimum start point to build the "right" relationship for interval i. If the interval j doesn't exist, store -1 for the interval i. Finally, you need output the stored value of each interval as an array.
+
+Note:
+You may assume the interval's end point is always bigger than its start point.
+You may assume none of these intervals have the same start point.
+Example 1:
+Input: [ [1,2] ]
+
+Output: [-1]
+
+Explanation: There is only one interval in the collection, so it outputs -1.
+Example 2:
+Input: [ [3,4], [2,3], [1,2] ]
+
+Output: [-1, 0, 1]
+
+Explanation: There is no satisfied "right" interval for [3,4].
+For [2,3], the interval [3,4] has minimum-"right" start point;
+For [1,2], the interval [2,3] has minimum-"right" start point.
+
+思路： 对start 排序， 然后遍历interval, 在排序好的start里找 low bound. 在排序之前要记录好原来的index
+
+```c++
+/**
+ * Definition for an interval.
+ * struct Interval {
+ *     int start;
+ *     int end;
+ *     Interval() : start(0), end(0) {}
+ *     Interval(int s, int e) : start(s), end(e) {}
+ * };
+ */
+
+class Solution {
+public:
+vector<int> findRightInterval(vector<Interval>& intervals) {
+    if(intervals.empty()) return {};
+    int n = intervals.size();
+    vector<int> res(n);
+    unordered_map<int, int> mp;
+
+    for(int i = 0; i < n; ++i){mp[intervals[i].start] = i;}
+
+    sort(intervals.begin(), intervals.end(), [](Interval a, Interval b){
+        return a.start < b.start;}
+    );
+
+    for(int i = 0; i < n; ++i){
+        int k = mp[intervals[i].start];// the previous index
+        int target = intervals[i].end;
+        // binary search:
+        if(target <= intervals[n-1].start){
+       //Because we have sorted the intervals, so the start point of binary search should be i, no need to search for range [0, i-1].
+            int l = i, r = n - 1;
+            while(l <= r){
+                int m = (l + r)/2;
+                if(intervals[m].start < target){l = m + 1;}
+                else if(intervals[m].start >= target){r = m - 1;}
+            }
+            res[k] = mp[intervals[l].start];
+        }else{
+            res[k] = -1;
+        }
+    }
+    return res;
+}
+};
+```
+
+另外， c++ map 自己实现了 lower_bound
+
+```c++
+class Solution {
+public:
+    vector<int> findRightInterval(vector<Interval>& intervals) {
+        map<int, int> hash;
+        vector<int> res;
+        int n = intervals.size();
+        for (int i = 0; i < n; ++i)
+            hash[intervals[i].start] = i;
+        for (auto in : intervals) {
+            auto itr = hash.lower_bound(in.end);
+            if (itr == hash.end()) res.push_back(-1);
+            else res.push_back(itr->second);
+        }
+        return res;
+    }
+};
+```
+
+#### 410. Split Array Largest Sum
+
+Given an array which consists of non-negative integers and an integer m, you can split the array into m non-empty continuous subarrays. Write an algorithm to minimize the largest sum among these m subarrays.
+
+Note:
+If n is the length of array, assume the following constraints are satisfied:
+
+1 ≤ n ≤ 1000
+1 ≤ m ≤ min(50, n)
+Examples:
+
+Input:
+nums = [7,2,5,10,8]
+m = 2
+
+Output:
+18
+
+Explanation:
+There are four ways to split nums into two subarrays.
+The best way is to split it into [7,2,5] and [10,8],
+where the largest sum among the two subarrays is only 18.
+
+思路： 这个题是cut数组, 找出分割成m份的最小最大sum. 所以数组子集的顺序不能改变的。（如果可以改变顺序， 是否能从大到小分？） 找出最小可能的sum, 和最大可能的 sum, 二分查找。
+
+```c++
+class Solution {
+public:
+    int splitArray(vector<int>& nums, int m) {
+        long long left = 0, right = 0;
+        for (int i = 0; i < nums.size(); ++i) {
+            left = max((int)left, nums[i]);
+            right += nums[i];
+        }
+        while (left < right) {
+            long long mid = left + (right - left) / 2;
+            if (can_split(nums, m, mid)) right = mid;
+            else left = mid + 1;
+        }
+        return left;
+    }
+    bool can_split(vector<int>& nums, int m, int sum) {
+        int cnt = 1, curSum = 0;
+        for (int i = 0; i < nums.size(); ++i) {
+            curSum += nums[i];
+            if (curSum > sum) {
+                curSum = nums[i];
+                ++cnt;
+                if (cnt > m) return false;
+            }
+        }
+        return true;
+    }
+};
+```
