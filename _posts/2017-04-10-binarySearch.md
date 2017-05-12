@@ -6,9 +6,12 @@ description: "leetcode题解，二分查找"
 tag: leetcode-算法讲解
 ---   
 
-### 二分查找
+## 二分查找
+注意的问题：
+* (low + high) / 2 容易越界， 所以用 low + (high - low) / 2 更好
+* 二分查找， 用在有有序性质的结构中。 或者找某个范围中的值。
 
-#### 483. Smallest Good Base
+### （1） 483. Smallest Good Base
 
 For an integer n, we call k>=2 a good base of n, if all digits of n base k are 1.
 
@@ -58,7 +61,7 @@ public:
 };
 ```
 
-### 475. Heaters
+### （2）  475. Heaters
 
 Winter is coming! Your first job during the contest is to design a standard heater with fixed warm radius to warm all the houses.
 
@@ -161,7 +164,7 @@ public:
 };
 ```
 
-#### 454. 4Sum II
+### （3）454. 4Sum II
 Given four lists A, B, C, D of integer values, compute how many tuples (i, j, k, l) there are such that A[i] + B[j] + C[k] + D[l] is zero.
 
 To make problem a bit easier, all A, B, C, D have same length of N where 0 ≤ N ≤ 500. All integers are in the range of -228 to 228 - 1 and the result is guaranteed to be at most 231 - 1.
@@ -258,7 +261,7 @@ public:
 };
 ```
 
-#### 441
+### （4） 441
 You have a total of n coins that you want to form in a staircase shape, where every k-th row must have exactly k coins.
 
 Given n, find the total number of full staircase rows that can be formed.
@@ -303,7 +306,7 @@ public:
 };
 ```
 
-#### 35. Search Insert Position
+### （5） 35. Search Insert Position
 Given a sorted array and a target value, return the index if the target is found. If not, return the index where it would be if it were inserted in order.
 
 You may assume no duplicates in the array.
@@ -340,7 +343,7 @@ public:
 
 
 
-#### 436. Find Right Interval Add to List
+### （6） 436. Find Right Interval Add to List
 
 Given a set of intervals, for each of the interval i, check if there exists an interval j whose start point is bigger than or equal to the end point of the interval i, which can be called that j is on the "right" of i.
 
@@ -434,7 +437,7 @@ public:
 };
 ```
 
-#### 410. Split Array Largest Sum
+### (7) 410. Split Array Largest Sum
 
 Given an array which consists of non-negative integers and an integer m, you can split the array into m non-empty continuous subarrays. Write an algorithm to minimize the largest sum among these m subarrays.
 
@@ -486,6 +489,184 @@ public:
             }
         }
         return true;
+    }
+};
+```
+
+### (8) 392. Is Subsequence Add to List
+DescriptionHintsSubmissionsSolutions
+Total Accepted: 29357
+Total Submissions: 66154
+Difficulty: Medium
+Contributor: LeetCode
+Given a string s and a string t, check if s is subsequence of t.
+
+You may assume that there is only lower case English letters in both s and t. t is potentially a very long (length ~= 500,000) string, and s is a short string (<=100).
+
+A subsequence of a string is a new string which is formed from the original string by deleting some (can be none) of the characters without disturbing the relative positions of the remaining characters. (ie, "ace" is a subsequence of "abcde" while "aec" is not).
+
+Example 1:
+s = "abc", t = "ahbgdc"
+
+Return true.
+
+Example 2:
+s = "axc", t = "ahbgdc"
+
+Return false.
+
+Follow up:
+If there are lots of incoming S, say S1, S2, ... , Sk where k >= 1B, and you want to check one by one to see if T has its subsequence. In this scenario, how would you change your code?
+
+思路： 这个题要A没什么难度。直接用 two pointer 即可。解法1 给出了代码。十分简单。 但是， 看题目的follow up, T 会远远长于 s. 如果要查询好多个s, 用two pointer 的方法要遍历 k 次 T. 显然我们需要将T中的信息存起来。可以对每个字符存一个 index 列表， 比如 T = "abacd", 存成： a->0,2; b->1;c->3;d->4. 然后对s中字符顺利查找， 后查找的字符的index 要 大于之前的index. 每次我们都取最小大于pre index 的下标作为选择， 也体现了一种贪心的思想。
+
+解法1：
+```c++
+class Solution {
+public:
+    bool isSubsequence(string s, string t) {
+        int i = 0;
+        int j = 0;
+        while (i < s.size() && j < t.size()){
+             if(s[i] == t[j]){
+                 i++;
+                 j++;
+             }else{
+                 j++;
+             }
+         }
+         if(i < s.size()){
+             return  false;
+         }
+         return true;
+    }
+};
+```
+
+解法2：
+```c++
+class Solution {
+public:
+    int upbound( vector<int> &curDic, int index){
+        int l = 0;
+        int r = curDic.size() -1;
+        if(r < 0){
+            return -1;
+        }
+        if(curDic[r] <= index){
+            return -1;
+        }
+        while(l <= r){
+            int mid = (l + r) / 2;
+            if(curDic[mid] <= index){
+                l = mid + 1;
+            }else{
+                r = mid - 1;
+            }
+        }
+        return l;
+    }
+    bool isSubsequence(string s, string t) {
+
+        vector<vector<int>> dic(26);
+        for(int i = 0;  i< t.size(); i++){
+            dic[t[i] - 'a'].push_back(i);
+        }
+        int pre = -1;
+        for(int i = 0; i < s.size(); i++){
+            // c++ 自带 upper_bound
+            // auto iter = upper_bound(record[s[i]-'a'].begin(), record[s[i]-'a'].end(), index);
+            // if(iter == record[s[i]-'a'].end()) return false;
+            // index = *iter;
+
+            vector<int> curDic = dic[s[i] - 'a'];
+            int l  = upbound(curDic, pre); // find index > pre
+            if(l == -1){
+                return false;
+            }
+            pre = curDic[l];
+        }
+        return true;
+    }
+};
+```
+
+### (9) 378. Kth Smallest Element in a Sorted Matrix Add to List
+DescriptionHintsSubmissionsSolutions
+Total Accepted: 33074
+Total Submissions: 75352
+Difficulty: Medium
+Contributor: LeetCode
+Given a n x n matrix where each of the rows and columns are sorted in ascending order, find the kth smallest element in the matrix.
+
+Note that it is the kth smallest element in the sorted order, not the kth distinct element.
+
+Example:
+
+matrix = [
+   [ 1,  5,  9],
+   [10, 11, 13],
+   [12, 13, 15]
+],
+k = 8,
+
+return 13.
+
+解法一： 利用最小堆
+
+```c++
+struct Node {
+	int val, i, j;
+	Node(int i, int j, int val) :i(i), j(j), val(val) {}
+    //重载 < 实现小顶堆（默认大顶堆）
+	bool operator < (const Node & x)const {
+		return val > x.val;
+	}
+};
+
+class Solution {
+public:
+	int kthSmallest(vector<vector<int>>& matrix, int k) {
+		priority_queue<Node> q;
+		int n = matrix.size();
+		//维护一个最小堆， 循环k次，保证每次 pop 出第 k 小元素
+		q.push(Node(0, 0, matrix[0][0]));
+		while (--k > 0) {
+			Node  x = q.top(); q.pop();
+			if (x.i == 0 && x.j + 1 < n) q.push(Node(x.i, x.j + 1, matrix[x.i][x.j + 1])); // 去重， 防止一个元素被加入多次，只有第一行加右边的元素
+			if (x.i + 1 < n) q.push(Node(x.i + 1, x.j, matrix[x.i + 1][x.j]));
+		}
+		return q.top().val;
+	}
+};
+```
+
+解法二： 利用二分查找。 最小元素是 ma[0][0], 最大元素 m[X-1][Y-1]. 我们可以二分查找元素 m, 是的矩阵中小于等于 m 的元素 正好 k 个。 所以关键问题变成了，求解矩阵中有几个元素小于 m. 利用矩阵有序的性质，我们可以在矩阵左下角开始查找。如果 m[i][0] <= m， 那么它所在列之上的 (i + 1) 个元素也是 < m. 然后 j++ 像右移再执行相同的判断。 如果  m[i][0] > m, 右边的元素直接舍去，向上移动一行。
+
+```c++
+class Solution {
+public:
+    int kthSmallest(vector<vector<int>>& matrix, int k) {
+        int left = matrix[0][0], right = matrix.back().back();
+        while (left < right) {
+            int mid = left + (right - left) / 2;
+            int cnt = search_less_equal(matrix, mid);
+            if (cnt < k) left = mid + 1;
+            else right = mid;
+        }
+        return left;
+    }
+    int search_less_equal(vector<vector<int>>& matrix, int target) {
+        int n = matrix.size(), i = n - 1, j = 0, res = 0;
+        while (i >= 0 && j < n) {
+            if (matrix[i][j] <= target) {
+                res += i + 1;
+                ++j;
+            } else {
+                --i;
+            }
+        }
+        return res;
     }
 };
 ```
